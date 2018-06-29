@@ -298,7 +298,7 @@ nav h1 a {
   }
 }
 
-/* ====================== Large screen tablets and laptops ====================== */
+/* ====================== Large screen tablets ====================== */
 @media screen and (min-width: 751px) {
   #breadcrumb {
     width: calc(50% - 80px);
@@ -335,9 +335,16 @@ nav h1 a {
   }
 }
 
-/* ====================== Desktop ====================== */
+/* ====================== Laptops ====================== */
 @media screen and (min-width: 1100px) {
   #restaurants-list li {
     width: calc(33.33% - 94px);
+  }
+}
+
+/* ====================== Desktops ====================== */
+@media screen and (min-width: 1400px) {
+  #restaurants-list li {
+    width: calc(25% - 94px);
   }
 }
