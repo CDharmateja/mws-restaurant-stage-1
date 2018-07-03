@@ -14,9 +14,9 @@ module.exports = function(grunt) {
         options: {
           engine: 'im',
           sizes: [{
-            width: '',
-            suffix: '',
-            quality: 100
+            width: '250px',
+            suffix: 'small',
+            quality: 30
           }]
         },
 
@@ -27,8 +27,8 @@ module.exports = function(grunt) {
         files: [{
           expand: true,
           src: ['*.{gif,jpg,png}'],
-          cwd: 'img/',
-          dest: 'images_src/'
+          cwd: 'img_src/',
+          dest: 'img/'
         }]
       }
     },
@@ -36,7 +36,7 @@ module.exports = function(grunt) {
     /* Clear out the images directory if it exists */
     clean: {
       dev: {
-        src: ['images_src'],
+        src: ['img'],
       },
     },
 
@@ -49,18 +49,18 @@ module.exports = function(grunt) {
       },
     },
 
-    /* Copy the "fixed" images that don't go through processing into the images/directory*/
+    /* Copy the "fixed" images that don't go through processing into the images/directory */
     copy: {
       dev: {
         files: [{
           expand: true,
-          src: 'img/*.{gif,jpg,png}',
-          dest: 'images_src/'
+          src: 'img_src/fixed/*.{gif,jpg,png}',
+          dest: 'img/'
         }]
       },
     },
   });
-
+  
   grunt.loadNpmTasks('grunt-responsive-images');
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-contrib-copy');
