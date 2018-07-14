@@ -25,6 +25,7 @@ self.addEventListener('install', (event) => {
         'js/dbhelper.js',
         'js/main.js',
         'js/restaurant_info.js',
+        'restaurant.svg'
       ]);
     });
   });
@@ -36,11 +37,6 @@ self.addEventListener('fetch', (event) => {
     // Else fetch the request, put it in cache and return response
     caches.match(event.request).then((response) => {
       return response || fetch(event.request).then((resp) => {
-        const responseClone = resp.clone();
-        caches.open(staticCacheName).then((cache) => {
-          cache.put(event.request, responseClone);
-        });
-
         return resp;
       });
     }).catch((error) => {

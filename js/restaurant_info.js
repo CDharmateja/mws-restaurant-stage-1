@@ -160,7 +160,12 @@ createReviewHTML = (review) => {
 fillBreadcrumb = (restaurant=self.restaurant) => {
   const breadcrumb = document.getElementById('breadcrumb');
   const li = document.createElement('li');
-  li.innerHTML = restaurant.name;
+  const a = document.createElement('a');
+  a.innerHTML = restaurant.name;
+  a.setAttribute('href', `restaurant.html?id=${restaurant.id}`);
+  // li.innerHTML = restaurant.name;
+  a.setAttribute('aria-current', 'page');
+  li.appendChild(a);
   breadcrumb.appendChild(li);
 }
 
@@ -179,3 +184,17 @@ getParameterByName = (name, url) => {
     return '';
   return decodeURIComponent(results[2].replace(/\+/g, ' '));
 }
+
+/**
+ * Make some accessibility changes to maps.
+ */
+mapAccessibility = () => {
+  iframe = document.querySelector('#map iframe');
+  if (iframe)
+    iframe.setAttribute('title', 'map');
+}
+
+/**
+ * Accessibility changes to maps after window loads.
+ */
+window.addEventListener('load', mapAccessibility);

@@ -141,13 +141,13 @@ createRestaurantHTML = (restaurant) => {
   const image = document.createElement('img');
   image.className = 'restaurant-img';
   image.src = DBHelper.imageUrlForRestaurant(restaurant);
-  image.alt = restaurant.name;
+  image.alt = '';
   image.sizes = '(max-width: 300px)  100vw, (min-width: 351px) 50vw';
   const imgName = DBHelper.imageUrlForRestaurant(restaurant).replace(/\.[^/.]+$/, "");
   image.srcset = `${imgName + '-300small.jpg'}, ${imgName + '-550small.jpg'}`;
   li.append(image);
 
-  const name = document.createElement('h1');
+  const name = document.createElement('h3');
   name.innerHTML = restaurant.name;
   li.append(name);
 
@@ -159,9 +159,9 @@ createRestaurantHTML = (restaurant) => {
   address.innerHTML = restaurant.address;
   li.append(address);
 
-  const more = document.createElement('a');
+  const more = document.createElement('button');
+  more.setAttribute('id', restaurant.id);
   more.innerHTML = 'View Details';
-  more.href = DBHelper.urlForRestaurant(restaurant);
   li.append(more)
 
   return li
@@ -174,9 +174,41 @@ addMarkersToMap = (restaurants = self.restaurants) => {
   restaurants.forEach(restaurant => {
     // Add marker to the map
     const marker = DBHelper.mapMarkerForRestaurant(restaurant, self.map);
+    // marker.setAttribute('tabindex', '0');
     google.maps.event.addListener(marker, 'click', () => {
       window.location.href = marker.url
     });
     self.markers.push(marker);
   });
 }
+
+/**
+ * Listen for button click to redirect to restaurant page.
+ */
+buttonEventListener = () => {
+  const restaurantsList = document.getElementById('restaurants-list');
+  const buttons = restaurantsList.getElementsByTagName('button');
+  console.log(buttons);
+  Array.prototype.forEach.call(buttons, (button) => {
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
+      location.href = `restaurant.html?id=${button.getAttribute('id')}`;
+    })
+  });
+}
+
+/**
+ * Making some part of google maps accessiblie
+ */
+accessibleMaps = () => {
+  iframe = document.querySelector('#map iframe');
+  iframe.setAttribute('title', 'map');
+}
+
+/**
+ * Make Event listener and accessibility changes after window loads.
+ */
+window.addEventListener('load', () => {
+  buttonEventListener();
+  accessibleMaps();
+})
