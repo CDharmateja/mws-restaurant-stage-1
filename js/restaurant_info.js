@@ -59,20 +59,20 @@ fillRestaurantHTML = (restaurant = self.restaurant) => {
   const picture = pictures[0];
 
   const imgName = DBHelper.imageUrlForRestaurant(restaurant).replace(/\.[^/.]+$/, "");
-  
+
   source1 = document.createElement('source');
   source1.media = '(min-width: 251px)';
   source1.srcset = `${imgName}-400medium.jpg 1x, ${imgName}-800large.jpg 2x`;
-  
+
   source2 = document.createElement('source');
   source2.media = '(max-width: 250px)';
   source2.srcset = `${imgName}-250small.jpg 1x, ${imgName}-550medium.jpg 2x`;
-  
+
   image = document.createElement('img');
   image.src = `${imgName}-800large.jpg`;
   image.alt = restaurant.name;
   image.id = 'restaurant-img';
-  
+
   picture.append(source1);
   picture.append(source2);
   picture.append(image);
@@ -162,7 +162,7 @@ createReviewHTML = (review) => {
 /**
  * Add restaurant name to the breadcrumb navigation menu
  */
-fillBreadcrumb = (restaurant=self.restaurant) => {
+fillBreadcrumb = (restaurant = self.restaurant) => {
   const breadcrumb = document.getElementById('breadcrumb');
   const li = document.createElement('li');
   const a = document.createElement('a');

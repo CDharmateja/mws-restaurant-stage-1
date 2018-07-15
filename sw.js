@@ -1,6 +1,8 @@
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js', {scope: '/'}).then((reg) => {
+    navigator.serviceWorker.register('sw.js', {
+      scope: '/'
+    }).then((reg) => {
       // Registration was successfull!
       console.log(`Service Worker registered successfully with scope: ${reg.scope}`);
     }).catch((error) => {
@@ -45,13 +47,14 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
+// Delete old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.filter((cacheName) => {
           return cacheName.startsWith('restaurant-reviews-') &&
-                 cacheName != staticCacheName;
+            cacheName != staticCacheName;
         }).map((cacheName) => {
           return cache.delete(cacheName);
         })
