@@ -189,6 +189,16 @@ nav h1 a {
   width: 200px;
 }
 
+select:-moz-focusring {
+  color: transparent;
+  text-shadow: 0 0 0 #000;
+}
+
+option:not(:checked) {
+  /* prevent <option>s from becoming transparent as well */
+  color: black;
+}
+
 .filter-options select:focus {
   -webkit-box-shadow: -1px 0px 8px 1px rgba(255, 255, 255, 1);
   -moz-box-shadow: -1px 0px 8px 1px rgba(255, 255, 255, 1);
@@ -248,7 +258,7 @@ nav h1 a {
 
 #restaurants-list li button {
   background-color: #A36A00;
-  border-bottom: 3px solid #eee;
+  border: 3px solid #eee;
   color: #fff;
   align-items: center;
   justify-content: center;
@@ -259,6 +269,16 @@ nav h1 a {
   text-align: center;
   text-decoration: none;
   text-transform: uppercase;
+}
+
+#restaurants-list li button:focus {
+  -webkit-box-shadow: -1px 0px 8px 1px #006ac0;
+  -moz-box-shadow: -1px 0px 8px 1px #006ac0;
+  box-shadow: -1px 0px 8px 1px #006ac0;
+}
+
+#restaurants-list li button::-moz-focus-inner {
+  border: 0;
 }
 
 /* ====================== Restaurant Details ====================== */
