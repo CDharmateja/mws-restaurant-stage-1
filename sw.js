@@ -37,10 +37,10 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     // If request is already cached, then return the response from cache
     // Else fetch the request, put it in cache and return response
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request).then((resp) => {
-        return resp;
-      });
+    caches.match(event.request, {
+      ignoreSearch: true
+    }).then((response) => {
+      return response || fetch(event.request);
     }).catch((error) => {
       console.log(error);
     })
