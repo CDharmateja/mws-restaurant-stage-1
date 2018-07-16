@@ -175,6 +175,7 @@ createRestaurantHTML = (restaurant) => {
 
   const more = document.createElement('button');
   more.setAttribute('id', restaurant.id);
+  more.setAttribute('aria-label', `View Details of ${restaurant.name}`);
   more.innerHTML = 'View Details';
   li.append(more)
 
@@ -202,7 +203,6 @@ addMarkersToMap = (restaurants = self.restaurants) => {
 buttonEventListener = () => {
   const restaurantsList = document.getElementById('restaurants-list');
   const buttons = restaurantsList.getElementsByTagName('button');
-  console.log(buttons);
   Array.prototype.forEach.call(buttons, (button) => {
     button.addEventListener('click', (event) => {
       event.preventDefault();
