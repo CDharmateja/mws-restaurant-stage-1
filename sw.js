@@ -16,8 +16,9 @@ if ('serviceWorker' in navigator) {
 const staticCacheName = 'restaurant-reviews-v1';
 
 self.addEventListener('install', (event) => {
-  event.waitUntil((cache) => {
-    caches.open(staticCacheName, (cache) => {
+  event.waitUntil(
+    caches.open(staticCacheName)
+    .then((cache) => {
       // cache static assets
       return cache.addAll([
         '/',
@@ -29,8 +30,8 @@ self.addEventListener('install', (event) => {
         'js/restaurant_info.js',
         'restaurant.svg'
       ]);
-    });
-  });
+    })
+  );
 });
 
 self.addEventListener('fetch', (event) => {
@@ -40,7 +41,16 @@ self.addEventListener('fetch', (event) => {
     caches.match(event.request, {
       ignoreSearch: true
     }).then((response) => {
-      return response || fetch(event.request);
+      return response || fetch(event.request)
+        .then((resp) => {
+          const responseClone = resp.clone();
+
+          caches.open(staticCacheName).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
+
+          return resp;
+        })
     }).catch((error) => {
       console.log(error);
     })
