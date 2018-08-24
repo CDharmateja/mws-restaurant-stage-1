@@ -10,7 +10,7 @@ npm i grunt -g
 ```
 ### Starting project
 ```
-npm start
+npm run dev
 ```
 
 Go to http://localhost:8000 to view the website.

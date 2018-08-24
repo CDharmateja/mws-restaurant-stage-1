@@ -1,3 +1,7 @@
+if (typeof idb === "undefined") {
+  self.importScripts('idb.js');
+}
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js', {
@@ -13,7 +17,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // latest cache name
-const staticCacheName = 'restaurant-reviews-v1';
+const staticCacheName = 'restaurant-reviews-v2';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -22,7 +26,6 @@ self.addEventListener('install', (event) => {
       // cache static assets
       return cache.addAll([
         '/',
-        'index.html',
         'restaurant.html',
         'css/styles.css',
         'js/dbhelper.js',
@@ -57,8 +60,47 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
+const createDB = () => {
+  return idb.open('restaurants', 2, upgradeDB => {
+    switch(upgradeDB.oldVersion) {
+      case 0:
+        // a placeholder case so that the switch block will
+        // executer when the database is first created
+        // (oldVersion is 0)
+      case 1:
+        console.log('Creating restaurants object store');
+        let store = upgradeDB.createObjectStore('restaurants', {keyPath: 'id'});
+      case 2:
+        console.log('Creating neighborhood index');
+        store = upgradeDB.transaction.objectStore('restaurants');
+        store.createIndex('neighborhood', 'neighborhood');
+    }
+  });
+};
+
+const addToIdb = () => {
+  fetch('http://localhost:1337/restaurants').then(resp => {
+    resp.json().then(restaurants => {
+      idb.open('restaurants', 2).then((db) => {
+        const tx = db.transaction(['restaurants'], 'readwrite');
+        const store = tx.objectStore('restaurants');
+        return Promise.all(restaurants.map((restaurant) => {
+          return store.add(restaurant);
+        })).catch(e => {
+          tx.abort();
+          console.log(e);
+        }).then(() => {
+          console.log('All items added successfully');
+        })
+      })
+    })
+  })
+}
+
 // Delete old caches
 self.addEventListener('activate', (event) => {
+  event.waitUntil(createDB());
+  event.waitUntil(addToIdb());
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
