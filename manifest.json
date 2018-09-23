@@ -3,16 +3,16 @@
   "name": "Restaurant Reviews",
   "icons": [
     {
-      "src": "restaurant.svg",
+      "src": "restaurant-192.svg",
       "type": "image/svg",
       "sizes": "192x192"
     },
     {
-      "src": "restaurant.svg",
+      "src": "restaurant-512.svg",
       "type": "image/svg",
       "sizes": "512x512"
     }
-  ],  
+  ],
   "start_url": "/",
   "background_color": "#fdfdfd",
   "display": "standalone",

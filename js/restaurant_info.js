@@ -1,5 +1,5 @@
-let restaurant;
-let map;
+let restaurant; // eslint-disable-line
+let map; // eslint-disable-line
 
 /**
  * Initialize Google map, called from HTML.
@@ -7,26 +7,26 @@ let map;
 window.initMap = () => {
   fetchRestaurantFromURL
     .then((restaurant) => {
-      self.map = new google.maps.Map(document.getElementById('map'), {
+      self.map = new google.maps.Map(document.getElementById('map'), { // eslint-disable-line
         zoom: 16,
         center: restaurant.latlng,
         scrollwheel: false
       });
       fillBreadcrumb();
-      DBHelper.mapMarkerForRestaurant(self.restaurant, self.map);
+      dbhelper.mapMarkerForRestaurant(self.restaurant, self.map); // eslint-disable-line
     })
     .catch((error) => {
       console.error(error);
-    })
-}
+    });
+};
 
 /**
  * Get a parameter by name from page URL.
  */
-getParameterByName = (name, url) => {
+const getParameterByName = (name, url) => {
   if (!url)
     url = window.location.href;
-  name = name.replace(/[\[\]]/g, '\\$&');
+  name = name.replace(/[[\]]/g, '\\$&');
   const regex = new RegExp(`[?&]${name}(=([^&#]*)|&|#|$)`),
     results = regex.exec(url);
   if (!results)
@@ -34,12 +34,12 @@ getParameterByName = (name, url) => {
   if (!results[2])
     return '';
   return decodeURIComponent(results[2].replace(/\+/g, ' '));
-}
+};
 
 /**
  * Get current restaurant from page URL.
  */
-fetchRestaurantFromURL = new Promise((resolve, reject) => {
+const fetchRestaurantFromURL = new Promise((resolve, reject) => {
   if (self.restaurant) {
     reject(null);
   }
@@ -47,7 +47,7 @@ fetchRestaurantFromURL = new Promise((resolve, reject) => {
   if (!id) {
     reject('No restaurant id in URL');
   } else {
-    DBHelper.fetchRestaurantById(id)
+    dbhelper.fetchRestaurantById(id) // eslint-disable-line
       .then((restaurant) => {
         self.restaurant = restaurant;
         if (!restaurant) {
@@ -56,14 +56,14 @@ fetchRestaurantFromURL = new Promise((resolve, reject) => {
         fillRestaurantHTML();
         resolve(restaurant);
       })
-      .catch(error => console.error(error));
+      .catch(error => console.log(error));
   }
-})
+});
 
 /**
  * Create restaurant HTML and add it to the webpage
  */
-fillRestaurantHTML = (restaurant = self.restaurant) => {
+const fillRestaurantHTML = (restaurant = self.restaurant) => {
   const name = document.getElementById('restaurant-name');
   name.innerHTML = restaurant.name;
 
@@ -73,7 +73,7 @@ fillRestaurantHTML = (restaurant = self.restaurant) => {
   const pictures = document.getElementsByTagName('picture');
   const picture = pictures[0];
 
-  const imgName = DBHelper.imageUrlForRestaurant(restaurant).replace(/\.[^/.]+$/, "");
+  const imgName = dbhelper.imageUrlForRestaurant(restaurant).replace(/\.[^/.]+$/, ''); // eslint-disable-line
 
   const source1 = document.createElement('source');
   source1.media = '(min-width: 251px)';
@@ -101,12 +101,12 @@ fillRestaurantHTML = (restaurant = self.restaurant) => {
   }
   // fill reviews
   fillReviewsHTML();
-}
+};
 
 /**
  * Create restaurant operating hours HTML table and add it to the webpage.
  */
-fillRestaurantHoursHTML = (operatingHours = self.restaurant.operating_hours) => {
+const fillRestaurantHoursHTML = (operatingHours = self.restaurant.operating_hours) => {
   const hours = document.getElementById('restaurant-hours');
   for (let key in operatingHours) {
     const row = document.createElement('tr');
@@ -121,12 +121,12 @@ fillRestaurantHoursHTML = (operatingHours = self.restaurant.operating_hours) => 
 
     hours.appendChild(row);
   }
-}
+};
 
 /**
  * Create all reviews HTML and add them to the webpage.
  */
-fillReviewsHTML = (reviews = self.restaurant.reviews) => {
+const fillReviewsHTML = (reviews = self.restaurant.reviews) => {
   const container = document.getElementById('reviews-container');
   const title = document.createElement('h2');
   title.innerHTML = 'Reviews';
@@ -143,15 +143,15 @@ fillReviewsHTML = (reviews = self.restaurant.reviews) => {
     ul.appendChild(createReviewHTML(review));
   });
   container.appendChild(ul);
-}
+};
 
 /**
  * Create review HTML and add it to the webpage.
  */
-createReviewHTML = (review) => {
+const createReviewHTML = (review) => {
   const li = document.createElement('li');
   const name = document.createElement('p');
-  strong = document.createElement('strong');
+  const strong = document.createElement('strong');
   strong.innerHTML = review.name;
   name.appendChild(strong);
   li.appendChild(name);
@@ -172,12 +172,12 @@ createReviewHTML = (review) => {
   li.appendChild(comments);
 
   return li;
-}
+};
 
 /**
  * Add restaurant name to the breadcrumb navigation menu
  */
-fillBreadcrumb = (restaurant = self.restaurant) => {
+const fillBreadcrumb = (restaurant = self.restaurant) => {
   const breadcrumb = document.getElementById('breadcrumb');
   const li = document.createElement('li');
   const a = document.createElement('a');
@@ -187,16 +187,16 @@ fillBreadcrumb = (restaurant = self.restaurant) => {
   a.setAttribute('aria-current', 'page');
   li.appendChild(a);
   breadcrumb.appendChild(li);
-}
+};
 
 /**
  * Make some accessibility changes to maps.
  */
-mapAccessibility = () => {
-  iframe = document.querySelector('#map iframe');
+const mapAccessibility = () => {
+  const iframe = document.querySelector('#map iframe');
   if (iframe)
     iframe.setAttribute('title', 'map');
-}
+};
 
 /**
  * Accessibility changes to maps after window loads.

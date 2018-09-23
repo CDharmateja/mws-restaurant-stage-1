@@ -1,4 +1,4 @@
-if (typeof idb === "undefined") {
+if (typeof idb === 'undefined') {
   self.importScripts('idb.js');
 }
 
@@ -22,18 +22,18 @@ const staticCacheName = 'restaurant-reviews-v2';
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(staticCacheName)
-    .then((cache) => {
-      // cache static assets
-      return cache.addAll([
-        '/',
-        'restaurant.html',
-        'css/styles.css',
-        'js/dbhelper.js',
-        'js/main.js',
-        'js/restaurant_info.js',
-        'restaurant.svg'
-      ]);
-    })
+      .then((cache) => {
+        // cache static assets
+        return cache.addAll([
+          '/',
+          'restaurant.html',
+          'css/styles.css',
+          'js/dbhelper.js',
+          'js/main.js',
+          'js/restaurant_info.js',
+          'restaurant.svg'
+        ]);
+      })
   );
 });
 
@@ -53,54 +53,15 @@ self.addEventListener('fetch', (event) => {
           });
 
           return resp;
-        })
+        });
     }).catch((error) => {
       console.log(error);
     })
   );
 });
 
-const createDB = () => {
-  return idb.open('restaurants', 2, upgradeDB => {
-    switch(upgradeDB.oldVersion) {
-      case 0:
-        // a placeholder case so that the switch block will
-        // executer when the database is first created
-        // (oldVersion is 0)
-      case 1:
-        console.log('Creating restaurants object store');
-        let store = upgradeDB.createObjectStore('restaurants', {keyPath: 'id'});
-      case 2:
-        console.log('Creating neighborhood index');
-        store = upgradeDB.transaction.objectStore('restaurants');
-        store.createIndex('neighborhood', 'neighborhood');
-    }
-  });
-};
-
-const addToIdb = () => {
-  fetch('http://localhost:1337/restaurants').then(resp => {
-    resp.json().then(restaurants => {
-      idb.open('restaurants', 2).then((db) => {
-        const tx = db.transaction(['restaurants'], 'readwrite');
-        const store = tx.objectStore('restaurants');
-        return Promise.all(restaurants.map((restaurant) => {
-          return store.add(restaurant);
-        })).catch(e => {
-          tx.abort();
-          console.log(e);
-        }).then(() => {
-          console.log('All items added successfully');
-        })
-      })
-    })
-  })
-}
-
 // Delete old caches
 self.addEventListener('activate', (event) => {
-  event.waitUntil(createDB());
-  event.waitUntil(addToIdb());
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -108,7 +69,7 @@ self.addEventListener('activate', (event) => {
           return cacheName.startsWith('restaurant-reviews-') &&
             cacheName != staticCacheName;
         }).map((cacheName) => {
-          return cache.delete(cacheName);
+          return caches.delete(cacheName);
         })
       );
     })

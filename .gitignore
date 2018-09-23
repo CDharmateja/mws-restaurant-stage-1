@@ -63,7 +63,7 @@ config/local.js
 # About bower_components dir, you can see this:
 # http://addyosmani.com/blog/checking-in-front-end-dependencies/
 # (credit Addy Osmani, @addyosmani)
-# 
+#
 ################################################
 
 node_modules
@@ -117,3 +117,5 @@ nbproject
 .idea
 .node_history
 img/*
+dist/
+.vscode
