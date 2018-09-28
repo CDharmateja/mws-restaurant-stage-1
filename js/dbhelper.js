@@ -12,7 +12,55 @@ class DBHelper {
     this.dbPromise = this.createDB();
 
     // Adds restaurants json to indexedDB
-    this.restaurants = new Promise((resolve, reject) => {
+    this.restaurants = this.restaurantsPromise();
+
+    // restaurant reviews
+    this.reviews = this.reviewsPromise();
+  }
+
+  /**
+   * Database URL for reviews.
+   */
+  static get REVIEWS_DATABASE_URL() {
+    const port = 1337; // Change this to your server port
+    return `http://localhost:${port}/reviews`;
+  }
+
+  /**
+   * Database URL for restaurants.
+   */
+  static get DATABASE_URL() {
+    const port = 1337; // Change this to your server port
+    return `http://localhost:${port}/restaurants`;
+  }
+
+  /**
+   * Create indexedDB database
+   */
+  createDB() {
+    /* eslint-disable */
+    return idb.open('restaurants', 1, upgradeDB => {
+      switch (upgradeDB.oldVersion) {
+        case 0:
+          // a placeholder case so that the switch block will
+          // executer when the database is first created
+          // (oldVersion is 0)
+        case 1:
+          console.log('Creating restaurants object store');
+          upgradeDB.createObjectStore('restaurants', {
+            keyPath: 'id'
+          });
+          upgradeDB.createObjectStore('reviews', {
+            keyPath: 'id'
+          });
+      }
+    });
+    /* eslint-enable */
+  }
+
+  // Returns promise containing restaurants json
+  restaurantsPromise() {
+    return new Promise((resolve, reject) => {
       // Open indexeDB and see if it has restaurants in it
       this.dbPromise.then('restaurants', 1).then(db => {
         const tx = db.transaction(['restaurants'], 'readonly');
@@ -47,34 +95,42 @@ class DBHelper {
     });
   }
 
-  /**
-   * Database URL.
-   * Change this to restaurants.json file location on your server.
-   */
-  static get DATABASE_URL() {
-    const port = 1337; // Change this to your server port
-    return `http://localhost:${port}/restaurants`;
-  }
-
-  /**
-   * Create indexedDB database
-   */
-  createDB() {
-    /* eslint-disable */
-    return idb.open('restaurants', 1, upgradeDB => {
-      switch (upgradeDB.oldVersion) {
-        case 0:
-          // a placeholder case so that the switch block will
-          // executer when the database is first created
-          // (oldVersion is 0)
-        case 1:
-          console.log('Creating restaurants object store');
-          upgradeDB.createObjectStore('restaurants', {
-            keyPath: 'id'
+  // Return promise containing reviews json
+  reviewsPromise() {
+    return  new Promise((resolve, reject) => {
+      // Open indexeDB and see if it has reviews in it
+      this.dbPromise.then('restaurants', 1).then(db => {
+        const tx = db.transaction(['reviews'], 'readonly');
+        const store = tx.objectStore('reviews');
+        const reviews = store.getAll();
+        tx.complete;
+        return reviews;
+      }).then((reviews) => {
+        if (reviews.length == 0) {
+          // If there is no reviews info in indexedDB then add it
+          this.fetchReviews().then(reviews => {
+            console.log(reviews);
+            this.dbPromise.then((db) => {
+              const tx = db.transaction(['reviews'], 'readwrite');
+              const store = tx.objectStore('reviews');
+              return Promise.all(reviews.map((review) => {
+                return store.add(review);
+              })).catch(e => {
+                tx.abort();
+                console.log(e);
+                reject('Couldn\'t add reviews');
+              }).then(() => {
+                console.log('All reviews added successfully');
+                resolve(reviews);
+              });
+            });
           });
-      }
+        } else {
+          // If there is restaurant info then return it
+          resolve(reviews);
+        }
+      }).catch(e => console.log(e));
     });
-    /* eslint-enable */
   }
 
   /**
@@ -92,6 +148,18 @@ class DBHelper {
       .catch(error => console.error(error));
   }
 
+  fetchReviews() {
+    return fetch(DBHelper.REVIEWS_DATABASE_URL)
+      .then(response => {
+        return response.json()
+          .then(data => {
+            return data;
+          })
+          .catch(error => console.log(error));
+      })
+      .catch(error => console.log(error));
+  }
+
   /**
    * Fetch a restaurant by its ID.
    */
@@ -100,6 +168,21 @@ class DBHelper {
     return this.restaurants
       .then((restaurants) => {
         return restaurants[id];
+      })
+      .catch(error => console.log(error));
+  }
+
+  /**
+   * Fetch reviews of a restaurant by id.
+   */
+  fetchReviewsById(id) {
+    id = parseInt(id);
+    // Fetch all restaurant reviews with proper error handling.
+    return this.reviews
+      .then(reviews => {
+        const reviewsById = reviews.filter(review => id === review.restaurant_id);
+        console.log('reviewsById', reviewsById);
+        return reviewsById;
       })
       .catch(error => console.log(error));
   }

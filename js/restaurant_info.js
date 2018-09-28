@@ -1,5 +1,8 @@
-let restaurant; // eslint-disable-line
-let map; // eslint-disable-line
+/* eslint-disable */
+let restaurant;
+let map;
+let reviews;
+/* eslint-enable */
 
 /**
  * Initialize Google map, called from HTML.
@@ -61,6 +64,30 @@ const fetchRestaurantFromURL = new Promise((resolve, reject) => {
 });
 
 /**
+ * Get current restaurant from page URL.
+ */
+const fetchReviewsFromURL = new Promise((resolve, reject) => { // eslint-disable-line
+  if (self.reviews) {
+    reject(null);
+  }
+  const id = getParameterByName('id');
+  if (!id) {
+    reject('No restaurant id in URL');
+  } else {
+    dbhelper.fetchReviewsById(id) // eslint-disable-line
+      .then((reviews) => {
+        self.reviews = reviews;
+        if (!reviews) {
+          reject('Restaurant not found');
+        }
+        fillReviewsHTML();
+        resolve(reviews);
+      })
+      .catch(error => console.log(error));
+  }
+});
+
+/**
  * Create restaurant HTML and add it to the webpage
  */
 const fillRestaurantHTML = (restaurant = self.restaurant) => {
@@ -100,7 +127,7 @@ const fillRestaurantHTML = (restaurant = self.restaurant) => {
     fillRestaurantHoursHTML();
   }
   // fill reviews
-  fillReviewsHTML();
+  // fillReviewsHTML();
 };
 
 /**
@@ -126,7 +153,8 @@ const fillRestaurantHoursHTML = (operatingHours = self.restaurant.operating_hour
 /**
  * Create all reviews HTML and add them to the webpage.
  */
-const fillReviewsHTML = (reviews = self.restaurant.reviews) => {
+const fillReviewsHTML = (reviews = self.reviews) => {
+  console.log('reviews', reviews);
   const container = document.getElementById('reviews-container');
   const title = document.createElement('h2');
   title.innerHTML = 'Reviews';
@@ -158,7 +186,8 @@ const createReviewHTML = (review) => {
 
   const date = document.createElement('p');
   const em = document.createElement('em');
-  em.innerHTML = review.date;
+  em.innerHTML = new Date(review.createdAt).toLocaleDateString();
+  console.log(em.innerHTML);
   date.appendChild(em);
   li.appendChild(date);
 
