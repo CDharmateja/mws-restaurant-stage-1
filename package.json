@@ -6,10 +6,8 @@
   "scripts": {
     "debug": "node inspect app.js",
     "server": "node app.js",
-    "start": "python3 -m http.server 8000",
-    "prod-start": "cd dist && python3 -m http.server 8000",
-    "dev": "concurrently --kill-others \"npm run start\" \"npm run server\"",
-    "prod": "concurrently --kill-others \"npm run prod-start\" \"npm run server\""
+    "dev": "python3 -m http.server 8000",
+    "prod": "cd dist && python3 -m http.server 8000"
   },
   "repository": {
     "type": "git",
@@ -20,6 +18,7 @@
     "gulp": "^3.9.1",
     "gulp-clean": "^0.4.0",
     "gulp-clean-css": "^3.10.0",
+    "gulp-gzip": "^1.4.2",
     "gulp-htmlmin": "^5.0.1",
     "gulp-responsive": "^2.11.0",
     "gulp-uglify": "^3.0.1",

@@ -1,34 +1,48 @@
 /* eslint-disable */
 let restaurant;
-let map;
+let newMap;
 let reviews;
 /* eslint-enable */
 
 /**
- * Initialize Google map, called from HTML.
+ * Initialize map as soon as the page is loaded.
  */
-window.initMap = () => {
-  fetchRestaurantFromURL
-    .then((restaurant) => {
-      self.map = new google.maps.Map(document.getElementById('map'), { // eslint-disable-line
-        zoom: 16,
-        center: restaurant.latlng,
-        scrollwheel: false
-      });
-      fillBreadcrumb();
-      dbhelper.mapMarkerForRestaurant(self.restaurant, self.map); // eslint-disable-line
-    })
-    .catch((error) => {
-      console.error(error);
+document.addEventListener('DOMContentLoaded', () => {
+  initMap();
+});
+
+/**
+ * Initialize leaflet map
+ */
+const initMap = () => {
+  fetchRestaurantFromURL.then((restaurant) => {
+    self.newMap = L.map('map', { // eslint-disable-line
+      center: [restaurant.latlng.lat, restaurant.latlng.lng],
+      zoom: 16,
+      scrollWheelZoom: false
     });
+    // eslint-disable-next-line
+    L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.jpg70?access_token={mapboxToken}', {
+      mapboxToken: 'pk.eyJ1IjoiZGhhcm1hdGVqYSIsImEiOiJjam1lbm0xN2wwNXZ3M2twc3FjOHF3M3l5In0.GqzE6FS4MYlOXmaNxG3Wvw',
+      maxZoom: 18,
+      attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
+        '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+        'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+      id: 'mapbox.streets'
+    }).addTo(self.newMap);
+    fillBreadcrumb();
+    // eslint-disable-next-line
+    dbhelper.mapMarkerForRestaurant(self.restaurant, self.newMap);
+  }).catch(error => console.log(error));
 };
 
 /**
  * Get a parameter by name from page URL.
  */
 const getParameterByName = (name, url) => {
-  if (!url)
+  if (!url) {
     url = window.location.href;
+  }
   name = name.replace(/[[\]]/g, '\\$&');
   const regex = new RegExp(`[?&]${name}(=([^&#]*)|&|#|$)`),
     results = regex.exec(url);
@@ -94,6 +108,14 @@ const fillRestaurantHTML = (restaurant = self.restaurant) => {
   const name = document.getElementById('restaurant-name');
   name.innerHTML = restaurant.name;
 
+  const favorite = document.getElementById('favorite');
+  favorite.setAttribute('aria-pressed', restaurant.is_favorite);
+  if (restaurant.is_favorite === 'true' || restaurant.is_favorite === true) {
+    favorite.style = 'color: #cc0000';
+  } else {
+    favorite.style = 'color: #757575';
+  }
+
   const address = document.getElementById('restaurant-address');
   address.innerHTML = restaurant.address;
 
@@ -126,8 +148,6 @@ const fillRestaurantHTML = (restaurant = self.restaurant) => {
   if (restaurant.operating_hours) {
     fillRestaurantHoursHTML();
   }
-  // fill reviews
-  // fillReviewsHTML();
 };
 
 /**
@@ -154,11 +174,11 @@ const fillRestaurantHoursHTML = (operatingHours = self.restaurant.operating_hour
  * Create all reviews HTML and add them to the webpage.
  */
 const fillReviewsHTML = (reviews = self.reviews) => {
-  console.log('reviews', reviews);
   const container = document.getElementById('reviews-container');
   const title = document.createElement('h2');
   title.innerHTML = 'Reviews';
-  container.appendChild(title);
+  const form = document.getElementById('post-review');
+  container.insertBefore(title, form);
 
   if (!reviews) {
     const noReviews = document.createElement('p');
@@ -187,7 +207,6 @@ const createReviewHTML = (review) => {
   const date = document.createElement('p');
   const em = document.createElement('em');
   em.innerHTML = new Date(review.createdAt).toLocaleDateString();
-  console.log(em.innerHTML);
   date.appendChild(em);
   li.appendChild(date);
 
@@ -212,22 +231,140 @@ const fillBreadcrumb = (restaurant = self.restaurant) => {
   const a = document.createElement('a');
   a.innerHTML = restaurant.name;
   a.setAttribute('href', `restaurant.html?id=${restaurant.id}`);
-  // li.innerHTML = restaurant.name;
   a.setAttribute('aria-current', 'page');
   li.appendChild(a);
   breadcrumb.appendChild(li);
 };
 
 /**
- * Make some accessibility changes to maps.
+ * Validate the review
  */
-const mapAccessibility = () => {
-  const iframe = document.querySelector('#map iframe');
-  if (iframe)
-    iframe.setAttribute('title', 'map');
+const validate_review = (name, rating, comment) => {
+  if (name === '' || name == undefined) {
+    // eslint-disable-next-line
+    dbhelper.snackbar('Please enter your name');
+    return false;
+  }
+  else if (rating < 1 || rating > 5) {
+    // eslint-disable-next-line
+    dbhelper.snackbar('Rating is required');
+    return false;
+  }
+  else if (comment === '' || comment == undefined) {
+    // eslint-disable-next-line
+    dbhelper.snackbar('Plese type comment');
+    return false;
+  }
+  return true;
 };
 
 /**
- * Accessibility changes to maps after window loads.
+ * Handle submission of review
  */
-window.addEventListener('load', mapAccessibility);
+document.getElementById('post-review').addEventListener('submit', event => {
+  event.preventDefault();
+
+  // Get the details filled in the form
+  const restaurant_id = getParameterByName('id');
+  const name = event.target.name.value;
+  let rating = 0;
+  const stars = event.target.star;
+  for (let i in stars) {
+    if (stars[i].checked) {
+      rating = 5 - i;
+      break;
+    }
+  }
+  const comments = event.target.comment.value;
+
+  // Reset form
+  event.target.name.value = '';
+  event.target.star[0].checked = false;
+  event.target.comment.value = '';
+
+  // Check if details are vaild and send them to server
+  if (validate_review(name, rating, comments)) {
+    // review object
+    const review = {
+      restaurant_id,
+      name,
+      rating,
+      comments
+    };
+
+    const body = {
+      restaurant_id,
+      name,
+      rating,
+      comments
+    };
+
+    if (navigator.onLine) {
+      // If user is online
+      // send a post request to server and add it to indexedDB
+      fetch('http://localhost:1337/reviews', {
+        method: 'POST',
+        body: JSON.stringify(body)
+      }).then(resp => {
+        resp.json().then(review => {
+          addReviewToHTML(review);
+        });
+        console.log(`Post review succesful ${resp}`);
+      }).catch(error => console.log(error));
+      dbhelper.saveReview(review); // eslint-disable-line
+    }
+    else {
+      // If user is not online
+      // add review to indexedDB and wait for user to come online
+      // eslint-disable-next-line
+      dbhelper.snackbar('Review will be posted when online');
+      dbhelper.saveReview(review); // eslint-disable-line
+      window.addEventListener('online', () => {
+        fetch('http://localhost:1337/reviews', {
+          method: 'POST',
+          body: JSON.stringify(body)
+        }).then(resp => {
+          console.log(`Post review succesful ${resp}`);
+        }).catch(error => console.log(error));
+      });
+    }
+  }
+});
+
+/**
+ * Add review to DOM
+ */
+const addReviewToHTML = review => {
+  const reviewsList = document.querySelector('#reviews-list');
+  const html = createReviewHTML(review);
+  reviewsList.appendChild(html);
+  const li = reviewsList.getElementsByTagName('li');
+  reviewsList.insertBefore(html, li[0]);
+};
+
+/**
+ * Handle toggling of favourite
+ */
+document.getElementById('favorite').addEventListener('click', event => {
+  const favorite = event.target;
+  const is_favorite = favorite.getAttribute('aria-pressed') === 'true';
+  if (!is_favorite) {
+    favorite.setAttribute('aria-pressed', 'true');
+    favorite.style = 'color: #cc0000';
+  } else {
+    favorite.setAttribute('aria-pressed', 'false');
+    favorite.style = 'color: #757575';
+  }
+  if (navigator.onLine) {
+    // eslint-disable-next-line
+    dbhelper.updatefavorite(getParameterByName('id'), !is_favorite);
+  } else {
+    //eslint-disable-next-line
+    dbhelper.snackbar('Favorite will be updated when you come online');
+    document.addEventListener('online', () => {
+      // eslint-disable-next-line
+      dbhelper.updatefavorite(getParameterByName('id'), !is_favorite);
+      console.log('Favorite updated!');
+    });
+  }
+});

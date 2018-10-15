@@ -31,33 +31,36 @@ self.addEventListener('install', (event) => {
           'js/dbhelper.js',
           'js/main.js',
           'js/restaurant_info.js',
-          'restaurant.svg'
+          'restaurant.svg',
+          'idb.js'
         ]);
       })
   );
 });
 
 self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    // If request is already cached, then return the response from cache
-    // Else fetch the request, put it in cache and return response
-    caches.match(event.request, {
-      ignoreSearch: true
-    }).then((response) => {
-      return response || fetch(event.request)
-        .then((resp) => {
-          const responseClone = resp.clone();
+  if (event.request.method === 'GET') {
+    event.respondWith(
+      // If request is already cached, then return the response from cache
+      // Else fetch the request, put it in cache and return response
+      caches.match(event.request, {
+        ignoreSearch: true
+      }).then((response) => {
+        return response || fetch(event.request)
+          .then((resp) => {
+            const responseClone = resp.clone();
 
-          caches.open(staticCacheName).then((cache) => {
-            cache.put(event.request, responseClone);
+            caches.open(staticCacheName).then((cache) => {
+              cache.put(event.request, responseClone);
+            });
+
+            return resp;
           });
-
-          return resp;
-        });
-    }).catch((error) => {
-      console.log(error);
-    })
-  );
+      }).catch((error) => {
+        console.log(error);
+      })
+    );
+  }
 });
 
 // Delete old caches

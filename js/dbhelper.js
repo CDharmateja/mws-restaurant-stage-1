@@ -8,30 +8,32 @@ if (typeof idb === 'undefined') {
 class DBHelper {
 
   constructor() {
+    // Server port
+    this.port = 1337;
+
     // Creates indexedDB
     this.dbPromise = this.createDB();
 
     // Adds restaurants json to indexedDB
     this.restaurants = this.restaurantsPromise();
-
-    // restaurant reviews
-    this.reviews = this.reviewsPromise();
   }
 
   /**
    * Database URL for reviews.
    */
-  static get REVIEWS_DATABASE_URL() {
-    const port = 1337; // Change this to your server port
-    return `http://localhost:${port}/reviews`;
+  REVIEWS_DATABASE_URL() {
+    return `http://localhost:${this.port}/reviews`;
   }
 
   /**
    * Database URL for restaurants.
    */
-  static get DATABASE_URL() {
-    const port = 1337; // Change this to your server port
-    return `http://localhost:${port}/restaurants`;
+  DATABASE_URL() {
+    return `http://localhost:${this.port}/restaurants`;
+  }
+
+  REVIEWS_BY_ID_DATABASE_URL(id) {
+    return `http://localhost:${this.port}/reviews/${id}`;
   }
 
   /**
@@ -48,10 +50,12 @@ class DBHelper {
         case 1:
           console.log('Creating restaurants object store');
           upgradeDB.createObjectStore('restaurants', {
-            keyPath: 'id'
+            keyPath: 'id',
+            autoIncrement: true
           });
           upgradeDB.createObjectStore('reviews', {
-            keyPath: 'id'
+            keyPath: 'id',
+            autoIncrement: true
           });
       }
     });
@@ -95,49 +99,11 @@ class DBHelper {
     });
   }
 
-  // Return promise containing reviews json
-  reviewsPromise() {
-    return  new Promise((resolve, reject) => {
-      // Open indexeDB and see if it has reviews in it
-      this.dbPromise.then('restaurants', 1).then(db => {
-        const tx = db.transaction(['reviews'], 'readonly');
-        const store = tx.objectStore('reviews');
-        const reviews = store.getAll();
-        tx.complete;
-        return reviews;
-      }).then((reviews) => {
-        if (reviews.length == 0) {
-          // If there is no reviews info in indexedDB then add it
-          this.fetchReviews().then(reviews => {
-            console.log(reviews);
-            this.dbPromise.then((db) => {
-              const tx = db.transaction(['reviews'], 'readwrite');
-              const store = tx.objectStore('reviews');
-              return Promise.all(reviews.map((review) => {
-                return store.add(review);
-              })).catch(e => {
-                tx.abort();
-                console.log(e);
-                reject('Couldn\'t add reviews');
-              }).then(() => {
-                console.log('All reviews added successfully');
-                resolve(reviews);
-              });
-            });
-          });
-        } else {
-          // If there is restaurant info then return it
-          resolve(reviews);
-        }
-      }).catch(e => console.log(e));
-    });
-  }
-
   /**
    * Fetch restaurants
    */
   fetchRestaurants() {
-    return fetch(DBHelper.DATABASE_URL)
+    return fetch(this.DATABASE_URL())
       .then((response) => {
         return response.json()
           .then(data => {
@@ -148,18 +114,6 @@ class DBHelper {
       .catch(error => console.error(error));
   }
 
-  fetchReviews() {
-    return fetch(DBHelper.REVIEWS_DATABASE_URL)
-      .then(response => {
-        return response.json()
-          .then(data => {
-            return data;
-          })
-          .catch(error => console.log(error));
-      })
-      .catch(error => console.log(error));
-  }
-
   /**
    * Fetch a restaurant by its ID.
    */
@@ -167,7 +121,7 @@ class DBHelper {
     // fetch all restaurants with proper error handling.
     return this.restaurants
       .then((restaurants) => {
-        return restaurants[id];
+        return restaurants[id - 1];
       })
       .catch(error => console.log(error));
   }
@@ -176,15 +130,35 @@ class DBHelper {
    * Fetch reviews of a restaurant by id.
    */
   fetchReviewsById(id) {
-    id = parseInt(id);
-    // Fetch all restaurant reviews with proper error handling.
-    return this.reviews
-      .then(reviews => {
-        const reviewsById = reviews.filter(review => id === review.restaurant_id);
-        console.log('reviewsById', reviewsById);
-        return reviewsById;
-      })
-      .catch(error => console.log(error));
+    // Get all cached reviews
+    return this.dbPromise.then('reviews', 1).then(db => {
+      const tx = db.transaction('reviews', 'readwrite');
+      const store = tx.objectStore('reviews');
+      return store.getAll().then(reviews => {
+        const reviewsById = reviews.filter(review => review.restaurant_id === id).reverse();
+        // Return reviews if available
+        if (reviewsById.length > 0) {
+          return reviewsById;
+        } else {
+          // Cache reviews if they are not in cache
+          return new Promise((resolve, reject) => {
+            fetch(`http://localhost:${this.port}/reviews/?restaurant_id=${parseInt(id)}`).then(resp => {
+              return resp.json().then(reviews => {
+                this.dbPromise.then('reviews', 1).then(db => {
+                  const tx = db.transaction('reviews', 'readwrite');
+                  const store = tx.objectStore('reviews');
+                  return Promise.all(reviews.map(review => store.add(review)));
+                });
+                return reviews;
+              });
+            }).then(data => {
+              data = data.reverse();
+              resolve(data);
+            }).catch(err => reject(err));
+          });
+        }
+      }).catch(error => console.log(error));
+    });
   }
 
   /**
@@ -267,6 +241,27 @@ class DBHelper {
   }
 
   /**
+   * Toggle favourite
+   */
+  updatefavorite(id, is_favorite) {
+    fetch(`http://localhost:1337/restaurants/${id}/?is_favorite=${is_favorite}`, {
+      method: 'PUT'
+    }).then(resp => {
+      resp.json().then(json => {
+        this.dbPromise.then('restaurants', 1).then(db => {
+          const tx = db.transaction('restaurants', 'readwrite');
+          const store = tx.objectStore('restaurants');
+          store.put(json);
+          return tx.complete;
+        }).then(() => {
+          console.log('restaurant updated!');
+        }).catch(error => console.log(error));
+        return json;
+      });
+    });
+  }
+
+  /**
    * Restaurant page URL.
    */
   urlForRestaurant(restaurant) {
@@ -284,16 +279,43 @@ class DBHelper {
    * Map marker for a restaurant.
    */
   mapMarkerForRestaurant(restaurant, map) {
-    const marker = new google.maps.Marker({ // eslint-disable-line
-      position: restaurant.latlng,
-      title: restaurant.name,
-      url: this.urlForRestaurant(restaurant),
-      map: map,
-      animation: google.maps.Animation.DROP // eslint-disable-line
-    });
+    // https://leafletjs.com/reference-1.3.0.html#marker
+    // eslint-disable-next-line
+    const marker = new L.marker([restaurant.latlng.lat, restaurant.latlng.lng],
+      {
+        title: restaurant.name,
+        alt: restaurant.name,
+        url: this.urlForRestaurant(restaurant)
+      });
+    marker.addTo(map);
     return marker;
+  }
+
+  /**
+   * Toast view message to notify user
+   */
+  snackbar(message) {
+    var x = document.getElementById('snackbar');
+    x.className = 'show';
+    x.innerText = message;
+    setTimeout(() => {
+      x.className = x.className.replace('show', '');
+      x.innerText = '';
+    }, 3000);
+  }
+
+  /**
+   * Save review in indexedDB
+   */
+  saveReview(review) {
+    this.dbPromise.then('reviews', 1).then(db => {
+      const tx = db.transaction(['reviews'], 'readwrite');
+      const store = tx.objectStore('reviews');
+      store.add(review);
+    }).catch(err => console.log(err));
   }
 
 }
 
-const dbhelper = new DBHelper(); // eslint-disable-line
+// eslint-disable-next-line
+const dbhelper = new DBHelper();

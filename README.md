@@ -2,7 +2,12 @@
 
 ## Introduction
 
-This is a project from Udacity's Mobile Web Specialist nanodegree. This project aims at building a progressive web app.
+This is a project from Udacity's Mobile Web Specialist nanodegree. This project aims at building a progressive web app. The features of this website are:
+
+* Responsive
+* Accessible
+* Offline Capablity
+* Performance
 
 ## Getting Started
 
@@ -17,6 +22,6 @@ This is a project from Udacity's Mobile Web Specialist nanodegree. This project 
 ### Starting project
 
 * `npm run dev` for development
-* Use `gulp clean` and `gulp` to build and `npm run dev` to run website for production.
+* Use `gulp clean` and `gulp` to build and `npm run prod` to run website for production.
 
 Go to http://localhost:8000 to view the website.

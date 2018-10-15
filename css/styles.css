@@ -346,6 +346,25 @@ option:not(:checked) {
   padding: 30px 40px 30px;
 }
 
+#favorite {
+  margin: auto;
+}
+
+#favorite:focus {
+  outline: none;
+  text-shadow: 3px 3px black;
+}
+
+.favorite:focus {
+  outline: none;
+  text-shadow: 2px 2px #000
+}
+
+#restaurant-container > div {
+  display: flex;
+  justify-content: space-between;
+}
+
 #reviews-container {
   padding: 30px 40px 30px;
 }
@@ -356,6 +375,51 @@ option:not(:checked) {
   font-weight: 300;
   letter-spacing: -1px;
   padding-bottom: 1pt;
+}
+
+form {
+  margin-left: 3%;
+}
+
+textarea {
+  width: 95%;
+}
+
+input[type=submit] {
+  border-radius: 5px;
+}
+
+.stars {
+  display: inline-flex;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+}
+
+input.star {
+  display: none;
+}
+
+label.star {
+  padding: 2px;
+  font-size: 26px;
+  color: #444;
+}
+
+input.star:checked ~ label.star:before {
+  content: '★';
+  color: #ac6407;
+}
+
+input.star-5:checked ~ label.star:before {
+  color: #ac6407;
+}
+
+input.star-1:checked ~ label.star:before {
+  color: #F62;
+}
+
+label.star:before {
+  content: '★';
 }
 
 #reviews-list {
@@ -391,6 +455,48 @@ option:not(:checked) {
 
 #restaurant-hours td {
   color: #666;
+}
+
+#snackbar {
+  visibility: hidden;
+  min-width: 250px;
+  margin-left: -125px;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  border-radius: 2px;
+  padding: 16px;
+  position: fixed;
+  z-index: 1;
+  left: 50%;
+  bottom: 30px;
+  font-size: 17px;
+}
+
+#snackbar.show {
+  visibility: visible;
+  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+
+@-webkit-keyframes fadein {
+  from {bottom: 0; opacity: 0;} 
+  to {bottom: 30px; opacity: 1;}
+}
+
+@keyframes fadein {
+  from {bottom: 0; opacity: 0;}
+  to {bottom: 30px; opacity: 1;}
+}
+
+@-webkit-keyframes fadeout {
+  from {bottom: 30px; opacity: 1;} 
+  to {bottom: 0; opacity: 0;}
+}
+
+@keyframes fadeout {
+  from {bottom: 30px; opacity: 1;}
+  to {bottom: 0; opacity: 0;}
 }
 
 /* ====================== Filter options for small screen ====================== */
@@ -450,6 +556,7 @@ option:not(:checked) {
     grid-area: 1 / 2 / 3 / 3;
   }
   #restaurant-container {
+    margin-top: 100px !important;
     grid-area: 1 / 1 / 2 / 2;
   }
   #reviews-container {
